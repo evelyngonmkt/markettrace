@@ -6,8 +6,8 @@ export function Mark({ size = 28, color = "currentColor" }: { size?: number; col
   // símbolo MarketTrace: três barras ligadas pelo M, a última perna faz a curva e termina no ponto (Sinal)
   return (
     <svg width={size} height={size * 0.8} viewBox="4 10 61 44" aria-hidden="true">
-      <path d="M12 48V17l14 14 14-14v21q0 10 8 10" fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="58.5" cy="48" r="4.5" fill="var(--sinal)" />
+      <path className="mark-m" pathLength={1} d="M12 48V17l14 14 14-14v21q0 10 8 10" fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <circle className="mark-dot" cx="58.5" cy="48" r="4.5" fill="var(--sinal)" />
     </svg>
   );
 }
