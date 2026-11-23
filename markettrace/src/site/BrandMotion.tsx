@@ -47,3 +47,25 @@ export function BrandMotion({ compact = false }: { compact?: boolean }) {
     </div>
   );
 }
+
+/** Fundo vivo do topo: malha de pontos, linha de dados se desenhando e o ponto (Sinal) percorrendo a linha. */
+export function HeroTrace() {
+  const d = "M-20 628 C 120 628, 170 606, 260 614 S 420 636, 520 618 S 700 590, 800 604 S 980 616, 1060 592 S 1240 560, 1460 540";
+  return (
+    <div className="hero-trace" aria-hidden="true">
+      <svg viewBox="0 0 1440 640" preserveAspectRatio="xMidYMax slice">
+        <defs>
+          <pattern id="ht-grid" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.4" fill="currentColor" /></pattern>
+        </defs>
+        <rect className="ht-grid" x="728" y="0" width="760" height="640" fill="url(#ht-grid)" />
+        <path className="ht-line" d={d} pathLength={1} />
+        {[[260, 614], [520, 618], [800, 604], [1060, 592]].map(([x, y], i) => <circle key={i} className="ht-node" cx={x} cy={y} r="6" style={{ animationDelay: `${0.4 + i * 0.5}s` }} />)}
+        <circle className="ht-run" r="8">
+          <animateMotion dur="7s" repeatCount="indefinite" path={d} keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+        </circle>
+      </svg>
+      <span className="ht-chip k1">Agenda · 4 posts hoje</span>
+      <span className="ht-chip k2">ROAS 4,8×</span>
+    </div>
+  );
+}

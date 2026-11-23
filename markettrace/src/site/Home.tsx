@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, ArrowUpRight, BarChart3, Calculator, CalendarDays, Check, KanbanSquare, Lightbulb, Palette, Plug, Radar, Sparkles, Store, Users, Wallet,
+  ArrowRight, ArrowUpRight, BarChart3, Bell, Calculator, CalendarDays, Check, KanbanSquare, Lightbulb, Palette, Plug, Radar, Sparkles, Store, Users, Wallet,
 } from "lucide-react";
 import { useSiteSettings } from "../lib/site";
-import { BrandMotion } from "./BrandMotion";
+import { BrandMotion, HeroTrace } from "./BrandMotion";
+import { InstallBlock } from "../app/Device";
 
 export const MODULES = [
   { icon: Sparkles, title: "Super IA de marketing", text: "Ideias de posts, assuntos do momento no seu segmento, planos de campanha e análises, já sabendo quem é a sua empresa." },
@@ -188,7 +189,9 @@ export default function Home() {
   const video = s.hero_video_url?.trim();
   return (
     <div className="home">
-      <section className="hero2">
+      <section className="hero-wrap">
+      <HeroTrace />
+      <div className="hero2">
         <div className="hero2-copy">
           <span className="kicker">Plataforma de marketing · do dado à decisão</span>
           <h1 className="display">{s.hero_titulo.replace(/\.$/, "")}<span className="signal-dot">.</span></h1>
@@ -206,29 +209,33 @@ export default function Home() {
         <div className="hero2-art">
           {video ? <div className="hero-video-wrap"><HeroVideo url={video} /></div> : <ProductDemo />}
         </div>
+      </div>
       </section>
 
-      <div className="ticker ticker-ink" aria-hidden="true">
+      <div className="ticker ticker-polen" aria-hidden="true">
         <div className="ticker-track">{[...TICKER, ...TICKER].map((t, i) => <span key={i}>{t}<i>•</i></span>)}</div>
       </div>
 
-      <section className="section">
+      <section className="band band-ink">
+        <div className="section">
         <div className="section-head">
           <span className="kicker">Como funciona</span>
           <h2>Um ciclo só, do primeiro rascunho ao resultado.</h2>
         </div>
-        <div className={`flow2 ${flowSeen ? "in" : ""}`} ref={flowRef}>
-          <svg className="flow2-line" viewBox="0 0 1000 12" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0 6H990" stroke="currentColor" strokeWidth="2" fill="none" pathLength={1} />
-          </svg>
+        <div className={`flow3 ${flowSeen ? "in" : ""}`} ref={flowRef}>
+          <div className="flow3-track" aria-hidden="true">
+            <span className="flow3-line" />
+            {STEPS.map((st, i) => <span key={st.n} className="flow3-node" style={{ "--i": i } as React.CSSProperties} />)}
+            <span className="flow3-run" />
+          </div>
           {STEPS.map((st, i) => (
-            <div className="flow2-step" key={st.n} style={{ transitionDelay: `${200 + i * 160}ms` }}>
-              <span className="flow2-dot" />
+            <div className="flow2-step" key={st.n} style={{ transitionDelay: `${200 + i * 160}ms`, "--i": i } as React.CSSProperties}>
               <span className="data-label">{st.n}</span>
               <strong>{st.title}</strong>
               <p>{st.text}</p>
             </div>
           ))}
+        </div>
         </div>
       </section>
 
@@ -271,7 +278,30 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section app-sec">
+        <div className="app-copy">
+          <span className="kicker">No seu bolso</span>
+          <h2>O MarketTrace no celular, avisando na hora certa.</h2>
+          <p className="muted">Instale o app direto do navegador, sem loja e sem ocupar espaço, e ligue as notificações de cada empresa.</p>
+          <ul className="app-list">
+            <li><Bell size={16} /> <span><strong>Hora de publicar:</strong> o aviso chega quando o post agendado está na hora.</span></li>
+            <li><Bell size={16} /> <span><strong>Tarefas do dia:</strong> um resumo às 9h com o que vence hoje.</span></li>
+            <li><Bell size={16} /> <span><strong>Suporte:</strong> a resposta do seu chamado assim que chega.</span></li>
+          </ul>
+          <div className="app-install"><InstallBlock /></div>
+        </div>
+        <div className="phone" aria-hidden="true">
+          <div className="phone-screen">
+            <div className="phone-time">09:00</div>
+            <div className="phone-note n1"><span className="pn-ico" /><div><b>Hora de publicar · MCI Store</b><small>Reels: bastidores da gravação</small></div></div>
+            <div className="phone-note n2"><span className="pn-ico" /><div><b>Tarefas de hoje</b><small>3 tarefas vencem hoje.</small></div></div>
+            <div className="phone-note n3"><span className="pn-ico" /><div><b>Resposta do suporte</b><small>Seu chamado foi respondido.</small></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="band band-nevoa2">
+        <div className="section">
         <div className="section-head">
           <span className="kicker">Tudo em um lugar</span>
           <h2>O que completa o dia a dia do marketing.</h2>
@@ -279,9 +309,10 @@ export default function Home() {
         <div className="module-grid mod2-grid">
           {MODULES.map((m, i) => <ModuleCard key={m.title} m={m} i={i} />)}
         </div>
+        </div>
       </section>
 
-      <section className="section band-nevoa">
+      <section className="section">
         <div className="section-head">
           <span className="kicker">Para quem é</span>
           <h2>Para quem cria, para quem analisa e para quem decide.</h2>
@@ -297,7 +328,7 @@ export default function Home() {
         <BrandMotion />
         <div className="cta cta-ink">
         <h2>Ideia boa precisa de rota.</h2>
-        <p>Crie sua conta, cadastre suas empresas e comece pelo que dói mais hoje.</p>
+        <p>Crie sua conta, cadastre suas empresas e veja campanhas, conteúdo e resultados lado a lado em poucos minutos.</p>
         <div className="hero-actions">
           <Link to="/cadastro" className="btn btn-primary btn-lg">Começar grátis <ArrowRight size={18} /></Link>
           <Link to="/planos" className="btn btn-light btn-lg">Ver planos</Link>
