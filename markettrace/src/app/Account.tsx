@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Monitor, Moon, Plus, Sun, Trash2 } from "lucide-react";
 import { FormModal, type FieldDef } from "../components/Crud";
 import { TicketThread } from "../components/Tickets";
-import { Badge, EmptyState, Loading, Notice, PageHeader, Panel, useToast } from "../components/ui";
+import { Badge, EmptyState, Loading, Modal, Notice, PageHeader, Panel, useToast } from "../components/ui";
 import { useAuth } from "../lib/auth";
 import { useRows, type Row } from "../lib/data";
 import { date, dateTime, label, options } from "../lib/format";
@@ -59,25 +59,78 @@ export function Integrations() {
 }
 
 /* ======================= EQUIPE ======================= */
+const TEAM_LIMIT = 8; // mesmo número da função team_limit() no banco
+
+function AccessModal({ title, initial, companies, withEmail, onSave, onClose }: {
+  title: string; initial: { papel: string; empresas: string[] | null; email?: string }; companies: Array<{ id: string; nome: string }>;
+  withEmail?: boolean; onSave: (v: { papel: string; empresas: string[] | null; email: string }) => Promise<void>; onClose: () => void;
+}) {
+  const [email, setEmail] = useState(initial.email ?? "");
+  const [papel, setPapel] = useState(initial.papel);
+  const [todas, setTodas] = useState(initial.empresas === null);
+  const [sel, setSel] = useState<string[]>(initial.empresas ?? []);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!todas && sel.length === 0) return setError("Escolha pelo menos uma empresa.");
+    setBusy(true); setError("");
+    try { await onSave({ papel, empresas: todas ? null : sel, email: email.trim() }); onClose(); }
+    catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
+  };
+  return (
+    <Modal title={title} onClose={onClose}>
+      <form className="form-stack" onSubmit={submit}>
+        {withEmail && <label className="field"><span>E-mail *</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>}
+        <div className="field"><span>Papel</span>
+          <div className="role-pick">
+            <label className={papel === "editor" ? "active" : ""}><input type="radio" checked={papel === "editor"} onChange={() => setPapel("editor")} /><strong>Editor</strong><small>Cria e edita: campanhas, posts, tarefas, orçamento…</small></label>
+            <label className={papel === "leitor" ? "active" : ""}><input type="radio" checked={papel === "leitor"} onChange={() => setPapel("leitor")} /><strong>Leitor</strong><small>Só acompanha. Ideal para gestores e diretoria.</small></label>
+          </div>
+        </div>
+        <div className="field"><span>Acesso às empresas</span>
+          <label className="check"><input type="checkbox" checked={todas} onChange={(e) => setTodas(e.target.checked)} /> Todas as empresas da conta (inclusive as que forem criadas depois)</label>
+          {!todas && (
+            <div className="company-pick">
+              {companies.map((c) => <label key={c.id} className="check"><input type="checkbox" checked={sel.includes(c.id)} onChange={() => toggle(c.id)} /> {c.nome}</label>)}
+            </div>
+          )}
+        </div>
+        <Notice tone="error">{error}</Notice>
+        <div className="form-actions"><button type="button" className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-primary" disabled={busy}>{busy ? "Salvando…" : "Salvar"}</button></div>
+      </form>
+    </Modal>
+  );
+}
+
 export function Team() {
-  const { account, isOwner, profile } = useAuth();
+  const { account, isOwner, profile, companies, company } = useAuth();
   const toast = useToast();
-  const members = useRows({ table: "account_members", select: "user_id,papel,created_at, profiles(nome,email)", eq: { account_id: account?.id }, order: ["created_at"], skip: !account });
+  const members = useRows({ table: "account_members", select: "user_id,papel,empresas,created_at, profiles(nome,email)", eq: { account_id: account?.id }, order: ["created_at"], skip: !account });
   const invites = useRows({ table: "invitations", eq: { account_id: account?.id, aceito: false }, order: ["created_at", false], skip: !account || !isOwner });
   const [inviting, setInviting] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
+  const active = companies.filter((c) => c.ativa);
+  const nomeEmpresa = Object.fromEntries(companies.map((c) => [c.id, c.nome]));
+  const temAcesso = (r: Row, cid: string) => r.papel === "owner" || !r.empresas || r.empresas.includes(cid);
+  const ocupacao = active.map((c) => ({ ...c, n: members.rows.filter((m) => temAcesso(m, c.id)).length + invites.rows.filter((i) => !i.empresas || i.empresas.includes(c.id)).length }));
+  const acessoTexto = (r: Row) => (r.papel === "owner" || !r.empresas ? "Todas as empresas" : r.empresas.map((id: string) => nomeEmpresa[id] ?? "empresa removida").join(", "));
 
-  const invite = async (v: Row) => {
-    const { error } = await supabase.from("invitations").insert({ account_id: account!.id, email: v.email, papel: v.papel });
+  const invite = async (v: { papel: string; empresas: string[] | null; email: string }) => {
+    const { error } = await supabase.from("invitations").insert({ account_id: account!.id, email: v.email, papel: v.papel, empresas: v.empresas });
     if (error) throw error;
     toast("Convite registrado");
     await Promise.all([members.reload(), invites.reload()]);
   };
-  const changeRole = async (userId: string, papel: string) => {
-    const { error } = await supabase.from("account_members").update({ papel }).eq("account_id", account!.id).eq("user_id", userId);
-    if (error) toast(errorMessage(error), "error"); else { toast("Papel atualizado"); await members.reload(); }
+  const saveAccess = async (v: { papel: string; empresas: string[] | null }) => {
+    const { error } = await supabase.from("account_members").update({ papel: v.papel, empresas: v.empresas }).eq("account_id", account!.id).eq("user_id", editing!.user_id);
+    if (error) throw error;
+    toast("Acesso atualizado");
+    await members.reload();
   };
   const removeMember = async (userId: string, nome: string) => {
-    if (!window.confirm(`Remover ${nome} da equipe?`)) return;
+    if (!window.confirm(`Remover ${nome} da equipe? A pessoa perde o acesso a todas as empresas desta conta.`)) return;
     const { error } = await supabase.from("account_members").delete().eq("account_id", account!.id).eq("user_id", userId);
     if (error) toast(errorMessage(error), "error"); else { toast("Pessoa removida"); await members.reload(); }
   };
@@ -85,49 +138,54 @@ export function Team() {
     const { error } = await supabase.from("invitations").delete().eq("id", id);
     if (error) toast(errorMessage(error), "error"); else await invites.reload();
   };
-  const limit = account?.plans?.limite_usuarios;
   const signupLink = `${window.location.origin}/cadastro?convite=1`;
 
   return (
     <>
-      <PageHeader kicker="Conta" title="Equipe" text="Quem trabalha nesta conta. Editores criam e alteram dados; leitores só consultam."
+      <PageHeader kicker="Conta" title="Equipe" text={`Convide pessoas para empresas específicas. Editores criam e alteram; leitores só acompanham. Até ${TEAM_LIMIT} pessoas por empresa.`}
         actions={isOwner && <button className="btn btn-primary btn-sm" onClick={() => setInviting(true)}><Plus size={15} /> Convidar pessoa</button>} />
-      {limit ? <Notice>Seu plano permite até {limit} usuário(s), contando convites pendentes.</Notice> : null}
+      {isOwner && (
+        <div className="team-usage">
+          {ocupacao.map((c) => (
+            <div key={c.id} className={`team-usage-item ${c.n >= TEAM_LIMIT ? "full" : ""}`}>
+              <span>{c.nome}</span><strong>{c.n}/{TEAM_LIMIT}</strong>
+              <div className="progress"><i className={c.n >= TEAM_LIMIT ? "over" : ""} style={{ width: `${Math.min(100, (c.n / TEAM_LIMIT) * 100)}%` }} /></div>
+            </div>
+          ))}
+        </div>
+      )}
       <Panel title="Pessoas" className="mt">
         {members.loading ? <Loading /> : (
-          <div className="list">{members.rows.map((m) => (
-            <div className="list-item" key={m.user_id}>
-              <div><strong>{m.profiles?.nome}{m.user_id === profile?.id ? " (você)" : ""}</strong><small>{m.profiles?.email} · desde {date(m.created_at)}</small></div>
-              {isOwner && m.papel !== "owner" ? (
-                <>
-                  <select value={m.papel} onChange={(e) => changeRole(m.user_id, e.target.value)} aria-label="Papel" className="btn btn-ghost btn-sm">
-                    <option value="editor">Editor</option><option value="leitor">Leitor</option>
-                  </select>
+          <div className="table-wrap"><table className="table">
+            <thead><tr><th>Pessoa</th><th>Papel</th><th>Acesso</th><th aria-label="Ações" /></tr></thead>
+            <tbody>{members.rows.map((m) => (
+              <tr key={m.user_id}>
+                <td data-label="Pessoa"><strong>{m.profiles?.nome}{m.user_id === profile?.id ? " (você)" : ""}</strong><br /><small className="muted">{m.profiles?.email}</small></td>
+                <td data-label="Papel"><Badge tone={m.papel === "owner" ? "signal" : m.papel === "editor" ? "info" : "neutral"}>{label("papel", m.papel)}</Badge></td>
+                <td data-label="Acesso">{acessoTexto(m)}</td>
+                <td className="row-actions">{isOwner && m.papel !== "owner" && <>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setEditing(m)}>Editar acesso</button>
                   <button className="icon-btn danger" title="Remover" onClick={() => removeMember(m.user_id, m.profiles?.nome)}><Trash2 size={15} /></button>
-                </>
-              ) : <Badge tone={m.papel === "owner" ? "signal" : "neutral"}>{label("papel", m.papel)}</Badge>}
-            </div>
-          ))}</div>
+                </>}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
         )}
       </Panel>
       {isOwner && (
         <Panel title="Convites pendentes" className="mt">
           {invites.rows.length ? (
             <div className="list">{invites.rows.map((i) => (
-              <div className="list-item" key={i.id}><div><strong>{i.email}</strong><small>{label("papel", i.papel)} · enviado em {date(i.created_at)}</small></div>
+              <div className="list-item" key={i.id}><div><strong>{i.email}</strong><small>{label("papel", i.papel)} · {acessoTexto(i)} · enviado em {date(i.created_at)}</small></div>
                 <button className="btn btn-ghost btn-sm" onClick={() => cancelInvite(i.id)}>Cancelar</button></div>
             ))}</div>
           ) : <EmptyState title="Nenhum convite pendente" />}
           <p className="muted small" style={{ marginTop: 12 }}>Depois de convidar, mande este link para a pessoa criar a conta com o mesmo e-mail: <code>{signupLink}</code>. Quem já tem cadastro entra na equipe na hora.</p>
         </Panel>
       )}
-      {inviting && (
-        <FormModal title="Convidar pessoa" submitLabel="Convidar" onClose={() => setInviting(false)} onSubmit={invite} initial={{ papel: "editor" }}
-          fields={[
-            { key: "email", label: "E-mail", type: "email", required: true },
-            { key: "papel", label: "Papel", type: "select", required: true, options: [{ value: "editor", label: "Editor (cria e altera)" }, { value: "leitor", label: "Leitor (só consulta)" }] },
-          ]} />
-      )}
+      {!isOwner && <p className="muted small mt">Só o dono(a) da conta convida pessoas e muda acessos.</p>}
+      {inviting && <AccessModal title="Convidar pessoa" withEmail companies={active} initial={{ papel: "editor", empresas: company ? [company.id] : null }} onSave={invite} onClose={() => setInviting(false)} />}
+      {editing && <AccessModal title={`Acesso de ${editing.profiles?.nome}`} companies={active} initial={{ papel: editing.papel, empresas: editing.empresas ?? null }} onSave={saveAccess} onClose={() => setEditing(null)} />}
     </>
   );
 }
