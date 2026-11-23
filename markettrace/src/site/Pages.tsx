@@ -66,7 +66,7 @@ export function Plans() {
       </section>
       <section className="section">
         {loading ? <Loading /> : rows.length === 0 ? (
-          <EmptyState title="Os planos estão sendo definidos" text="Enquanto isso, fale com a gente para conhecer o MarketTrace e combinar o melhor formato para você." action={<Link to="/contato" className="btn btn-primary">Falar com a Evelyn</Link>} />
+          <EmptyState title="Os planos estão sendo definidos" text="Enquanto isso, fale com a gente para conhecer o MarketTrace e combinar o melhor formato para você." action={<Link to="/contato" className="btn btn-primary">Falar com o suporte</Link>} />
         ) : (
           <div className="plan-grid">
             {rows.map((p) => {
