@@ -12,6 +12,7 @@ const Overview = lazy(() => import("./app/Overview"));
 const Calculators = lazy(() => import("./app/Calculators"));
 const Research = lazy(() => import("./app/Research"));
 const Social = lazy(() => import("./app/Social"));
+const Identity = lazy(() => import("./app/Identity"));
 const Work = () => import("./app/Work");
 const Companies = lazy(() => Work().then((m) => ({ default: m.Companies })));
 const Campaigns = lazy(() => Work().then((m) => ({ default: m.Campaigns })));
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="app" element={<AppLayout />}>
             <Route index element={<Overview />} />
             <Route path="empresas" element={<Companies />} />
+            <Route path="identidade" element={<Identity />} />
             <Route path="campanhas" element={<Campaigns />} />
             <Route path="calculadoras" element={<Calculators />} />
             <Route path="social" element={<Social />} />
