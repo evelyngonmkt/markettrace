@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Instagram, Linkedin, Mail, Menu, MessageCircle, X } from "lucide-react";
 import { Logo } from "../components/ui";
+import { BrandMotion } from "./BrandMotion";
 import { useAuth } from "../lib/auth";
 import { instagramUrl, useSiteSettings } from "../lib/site";
 
@@ -35,7 +36,7 @@ export default function SiteLayout() {
       <footer className="site-footer">
         <div className="footer-grid">
           <div>
-            <Logo size={22} light />
+            <BrandMotion compact />
             <p className="footer-tag">Do dado à decisão.</p>
             <p className="footer-credit">{s.assinatura_rotulo || "Uma criação de"} {s.assinatura_link ? <a href={s.assinatura_link} target="_blank" rel="noreferrer"><strong>{s.assinatura_nome || s.contato_nome}</strong></a> : <strong>{s.assinatura_nome || s.contato_nome}</strong>}</p>
           </div>
