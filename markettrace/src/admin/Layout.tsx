@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { FileClock, Gauge, Globe, Headphones, Inbox, LayoutGrid, LogOut, Menu, ShieldCheck, Tags, Users } from "lucide-react";
+import { FileClock, Gauge, Globe, Headphones, Inbox, LayoutGrid, LogOut, Menu, ShieldCheck, Tags, Users, Sparkles } from "lucide-react";
 import { EmptyState, Logo } from "../components/ui";
 import { useAuth } from "../lib/auth";
 import { configured, supabase } from "../lib/supabase";
@@ -13,6 +13,7 @@ const NAV = [
   { to: "/admin/suporte", label: "Suporte", icon: Headphones, count: "tickets" },
   { to: "/admin/planos", label: "Planos", icon: Tags },
   { to: "/admin/site", label: "Conteúdo do site", icon: Globe },
+  { to: "/admin/ia", label: "Inteligência artificial", icon: Sparkles },
   { to: "/admin/lgpd", label: "LGPD", icon: ShieldCheck, count: "lgpd" },
   { to: "/admin/auditoria", label: "Auditoria", icon: FileClock },
 ];
