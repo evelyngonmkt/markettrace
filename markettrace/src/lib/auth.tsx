@@ -5,7 +5,7 @@ import { configured, supabase } from "./supabase";
 export type Profile = { id: string; nome: string; email: string; telefone: string | null; is_super_admin: boolean };
 export type Account = {
   id: string; nome: string; tipo: string; status: string; trial_ate: string | null; ciclo: string;
-  plan_id: string | null; owner_id: string; papel: string;
+  plan_id: string | null; owner_id: string; papel: string; empresas: string[] | null;
   plans?: { nome: string; limite_empresas: number | null; limite_usuarios: number | null } | null;
 };
 export type Company = { id: string; account_id: string; nome: string; segmento: string | null; site: string | null; instagram: string | null; logo_url: string | null; ativa: boolean };
@@ -20,6 +20,7 @@ type AuthState = {
   company: Company | null;
   canEdit: boolean;
   isOwner: boolean;
+  canCreateCompany: boolean;
   setAccountId: (id: string) => void;
   setCompanyId: (id: string) => void;
   reload: () => Promise<void>;
@@ -49,12 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [p, m] = await Promise.all([
       supabase.from("profiles").select("id,nome,email,telefone,is_super_admin").eq("id", uid).maybeSingle(),
       supabase.from("account_members")
-        .select("papel, accounts(id,nome,tipo,status,trial_ate,ciclo,plan_id,owner_id, plans(nome,limite_empresas,limite_usuarios))")
+        .select("papel, empresas, accounts(id,nome,tipo,status,trial_ate,ciclo,plan_id,owner_id, plans(nome,limite_empresas,limite_usuarios))")
         .eq("user_id", uid),
     ]);
     setProfile((p.data as Profile) ?? null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const accs = ((m.data ?? []) as any[]).filter((r) => r.accounts).map((r) => ({ ...r.accounts, papel: r.papel })) as Account[];
+    const accs = ((m.data ?? []) as any[]).filter((r) => r.accounts).map((r) => ({ ...r.accounts, papel: r.papel, empresas: r.empresas ?? null })) as Account[];
     accs.sort((a, b) => a.nome.localeCompare(b.nome));
     setAccounts(accs);
     const ids = accs.map((a) => a.id);
@@ -93,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     companies: accountCompanies, company,
     canEdit: account ? ["owner", "editor"].includes(account.papel) : false,
     isOwner: account?.papel === "owner",
+    canCreateCompany: account ? account.papel === "owner" || (account.papel === "editor" && !account.empresas) : false,
     setAccountId: (id) => { store.set("mt.account", id); setAccountIdState(id); },
     setCompanyId: (id) => { store.set("mt.company", id); setCompanyIdState(id); },
     reload: () => load(session),
