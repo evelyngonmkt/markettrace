@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, BarChart3, Calculator, CalendarDays, Check, KanbanSquare, Lightbulb, Palette, Plug, Radar, Sparkles, Store, Users, Wallet,
+  ArrowRight, ArrowUpRight, BarChart3, Calculator, CalendarDays, Check, KanbanSquare, Lightbulb, Palette, Plug, Radar, Sparkles, Store, Users, Wallet,
 } from "lucide-react";
 import { useSiteSettings } from "../lib/site";
+import { BrandMotion } from "./BrandMotion";
 
 export const MODULES = [
   { icon: Sparkles, title: "Super IA de marketing", text: "Ideias de posts, assuntos do momento no seu segmento, planos de campanha e análises, já sabendo quem é a sua empresa." },
@@ -141,8 +142,32 @@ function QuickCalc() {
   );
 }
 
+/* ---------- cartão de módulo: traço na borda, inclinação pelo cursor e ícone vivo ---------- */
+function ModuleCard({ m, i }: { m: (typeof MODULES)[number]; i: number }) {
+  const ref = useRef<HTMLElement>(null);
+  const move = (e: React.MouseEvent) => {
+    const el = ref.current; if (!el || reduced()) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--rx", `${(-y * 6).toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${(x * 8).toFixed(2)}deg`);
+    el.style.setProperty("--mx", `${((x + 0.5) * 100).toFixed(1)}%`);
+  };
+  const leave = () => { const el = ref.current; if (!el) return; el.style.setProperty("--rx", "0deg"); el.style.setProperty("--ry", "0deg"); };
+  return (
+    <article ref={ref} className="module mod2" onMouseMove={move} onMouseLeave={leave} style={{ transitionDelay: `${(i % 3) * 60}ms` }}>
+      <svg className="mod2-trace" aria-hidden="true"><rect x="1" y="1" rx="14" ry="14" pathLength={1} /></svg>
+      <span className="module-icon"><m.icon size={20} strokeWidth={1.9} /></span>
+      <ArrowUpRight className="mod2-arrow" size={18} aria-hidden="true" />
+      <h3>{m.title}</h3>
+      <p>{m.text}</p>
+      <span className="mod2-bar" aria-hidden="true" />
+    </article>
+  );
+}
+
 /* ---------- vitrines de recursos ---------- */
-function Showcase({ kicker, title, text, points, children, flip = false }: { kicker: string; title: string; text: string; points: string[]; children: React.ReactNode; flip?: boolean }) {
+function Showcase({ kicker, title, text, points, children, flip = false, tone = "surface" }: { kicker: string; title: string; text: string; points: string[]; children: React.ReactNode; flip?: boolean; tone?: "surface" | "ink" | "mare" | "polen" }) {
   const [ref, seen] = useInView<HTMLDivElement>(0.2);
   return (
     <div ref={ref} className={`show ${flip ? "flip" : ""} ${seen ? "in" : ""}`}>
@@ -152,7 +177,7 @@ function Showcase({ kicker, title, text, points, children, flip = false }: { kic
         <p>{text}</p>
         <ul>{points.map((p) => <li key={p}><Check size={16} /> {p}</li>)}</ul>
       </div>
-      <div className="show-art" aria-hidden="true">{children}</div>
+      <div className={`show-art art-${tone}`} aria-hidden="true">{children}</div>
     </div>
   );
 }
@@ -183,7 +208,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="ticker" aria-hidden="true">
+      <div className="ticker ticker-ink" aria-hidden="true">
         <div className="ticker-track">{[...TICKER, ...TICKER].map((t, i) => <span key={i}>{t}<i>•</i></span>)}</div>
       </div>
 
@@ -213,7 +238,7 @@ export default function Home() {
           <h2>Menos abas abertas. Mais tempo para criar e decidir.</h2>
         </div>
         <div className="shows">
-          <Showcase kicker="Super IA" title="Uma especialista em marketing ao seu lado." text="Ela já conhece a empresa, o segmento e o público. Você pede, ela entrega pronto para executar."
+          <Showcase tone="ink" kicker="Super IA" title="Uma especialista em marketing ao seu lado." text="Ela já conhece a empresa, o segmento e o público. Você pede, ela entrega pronto para executar."
             points={["Ideias de posts com formato, gancho e legenda", "Assuntos em alta no seu segmento, com as fontes", "Planos de campanha com canais, verba e indicadores"]}>
             <div className="art-chat">
               <div className="q">Assuntos em alta no meu segmento esta semana?</div>
@@ -224,24 +249,26 @@ export default function Home() {
             points={["Visão de mês e de semana", "Agendamento com pré-visualização do post", "Exporta para o Google Agenda"]}>
             <div className="art-month">{Array.from({ length: 35 }, (_, i) => <div key={i} className={i === 17 ? "today" : ""}>{[3, 8, 10, 15, 17, 22, 24, 29].includes(i) && <i className={`s${i % 4}`} />}{[10, 24].includes(i) && <i className="s1" />}</div>)}</div>
           </Showcase>
-          <Showcase kicker="Números" title="Cada real investido com o retorno ao lado." text="Lance investimento e receita por canal e o MarketTrace calcula o resto. Sem planilha solta."
+          <Showcase tone="mare" kicker="Números" title="Cada real investido com o retorno ao lado." text="Lance investimento e receita por canal e o MarketTrace calcula o resto. Sem planilha solta."
             points={["ROAS, ROI, CPL e CAC automáticos", "Orçamento planejado x usado por categoria", "Margem real por canal de venda, já sem taxas e frete"]}>
             <div className="art-bars">{[["Meta Ads", 86], ["Google Ads", 58], ["E-mail", 41], ["Orgânico", 30]].map(([l, v]) => <div key={l as string}><span>{l}</span><i style={{ width: `${v}%` }} /></div>)}</div>
           </Showcase>
-          <Showcase flip kicker="Times e agências" title="Cada pessoa na empresa certa." text="Convide o time por empresa, com papel de editor ou leitor. Cada cliente com a própria logo, cores e fontes."
+          <Showcase flip tone="polen" kicker="Times e agências" title="Cada pessoa na empresa certa." text="Convide o time por empresa, com papel de editor ou leitor. Cada cliente com a própria logo, cores e fontes."
             points={["Até 8 pessoas por empresa, sem limite nas contas ilimitadas", "Gestores e diretoria acompanham sem mexer", "Avisos automáticos para o CRM e as automações da empresa"]}>
             <div className="art-team">{["Editor", "Editor", "Leitor", "Leitor"].map((p, i) => <div key={i}><span className={`av a${i}`} /><i /><em>{p}</em></div>)}</div>
           </Showcase>
         </div>
       </section>
 
-      <section className="section">
+      <section className="band band-mare">
+        <div className="section">
         <div className="section-head">
           <span className="kicker">Teste agora, sem cadastro</span>
           <h2>Sua campanha está dando retorno?</h2>
           <p className="muted">Coloque os números da última campanha. Dentro do MarketTrace são 10 calculadoras, com histórico por empresa.</p>
         </div>
         <QuickCalc />
+        </div>
       </section>
 
       <section className="section">
@@ -249,18 +276,12 @@ export default function Home() {
           <span className="kicker">Tudo em um lugar</span>
           <h2>O que completa o dia a dia do marketing.</h2>
         </div>
-        <div className="module-grid">
-          {MODULES.map((m) => (
-            <article className="module" key={m.title}>
-              <span className="module-icon"><m.icon size={20} strokeWidth={1.9} /></span>
-              <h3>{m.title}</h3>
-              <p>{m.text}</p>
-            </article>
-          ))}
+        <div className="module-grid mod2-grid">
+          {MODULES.map((m, i) => <ModuleCard key={m.title} m={m} i={i} />)}
         </div>
       </section>
 
-      <section className="section section-ink">
+      <section className="section band-nevoa">
         <div className="section-head">
           <span className="kicker">Para quem é</span>
           <h2>Para quem cria, para quem analisa e para quem decide.</h2>
@@ -272,12 +293,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section cta">
+      <section className="brand-band">
+        <BrandMotion />
+        <div className="cta cta-ink">
         <h2>Ideia boa precisa de rota.</h2>
         <p>Crie sua conta, cadastre suas empresas e comece pelo que dói mais hoje.</p>
         <div className="hero-actions">
           <Link to="/cadastro" className="btn btn-primary btn-lg">Começar grátis <ArrowRight size={18} /></Link>
-          <Link to="/planos" className="btn btn-ghost btn-lg">Ver planos</Link>
+          <Link to="/planos" className="btn btn-light btn-lg">Ver planos</Link>
+        </div>
         </div>
       </section>
     </div>
