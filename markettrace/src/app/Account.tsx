@@ -9,6 +9,7 @@ import { useRows, type Row } from "../lib/data";
 import { date, dateTime, label, options } from "../lib/format";
 import { errorMessage, supabase } from "../lib/supabase";
 import { getTheme, setTheme, type Theme } from "./Layout";
+import { OwnApps } from "./Apps";
 
 /* ======================= INTEGRAÇÕES ======================= */
 const INTEGRATIONS = [
@@ -26,7 +27,6 @@ const INTEGRATIONS = [
   { name: "Amazon", cat: "Marketplace", text: "Pedidos, taxas e estoque" },
   { name: "Google Agenda", cat: "Produtividade", text: "Rotinas e compromissos do time" },
   { name: "WhatsApp", cat: "Atendimento", text: "Conversas e automações" },
-  { name: "RD Station", cat: "Automação", text: "Leads e funis" },
 ];
 
 export function Integrations() {
@@ -42,7 +42,9 @@ export function Integrations() {
   };
   return (
     <>
-      <PageHeader kicker="Conexões" title="Integrações" text="As conexões com redes sociais, anúncios e marketplaces estão em desenvolvimento. Marque as que você mais precisa: isso define a ordem de lançamento." />
+      <PageHeader kicker="Conexões" title="Integrações" text="Conecte os apps da sua empresa agora. As conexões com redes sociais, anúncios e marketplaces estão em desenvolvimento: marque as que você mais precisa e isso define a ordem de lançamento." />
+      <OwnApps />
+      <span className="data-label" style={{ margin: "22px 0 10px" }}>Em breve</span>
       <div className="int-grid">
         {INTEGRATIONS.map((i) => (
           <article className="int-card" key={i.name}>
@@ -105,7 +107,7 @@ function AccessModal({ title, initial, companies, withEmail, onSave, onClose }: 
 }
 
 export function Team() {
-  const { account, isOwner, profile, companies, company } = useAuth();
+  const { account, isOwner, profile, companies, company, unlimited } = useAuth();
   const toast = useToast();
   const members = useRows({ table: "account_members", select: "user_id,papel,empresas,created_at, profiles(nome,email)", eq: { account_id: account?.id }, order: ["created_at"], skip: !account });
   const invites = useRows({ table: "invitations", eq: { account_id: account?.id, aceito: false }, order: ["created_at", false], skip: !account || !isOwner });
@@ -142,14 +144,14 @@ export function Team() {
 
   return (
     <>
-      <PageHeader kicker="Conta" title="Equipe" text={`Convide pessoas para empresas específicas. Editores criam e alteram; leitores só acompanham. Até ${TEAM_LIMIT} pessoas por empresa.`}
+      <PageHeader kicker="Conta" title="Equipe" text={`Convide pessoas para empresas específicas. Editores criam e alteram; leitores só acompanham. ${unlimited ? "Sua conta não tem limite de pessoas." : `Até ${TEAM_LIMIT} pessoas por empresa.`}`}
         actions={isOwner && <button className="btn btn-primary btn-sm" onClick={() => setInviting(true)}><Plus size={15} /> Convidar pessoa</button>} />
       {isOwner && (
         <div className="team-usage">
           {ocupacao.map((c) => (
-            <div key={c.id} className={`team-usage-item ${c.n >= TEAM_LIMIT ? "full" : ""}`}>
-              <span>{c.nome}</span><strong>{c.n}/{TEAM_LIMIT}</strong>
-              <div className="progress"><i className={c.n >= TEAM_LIMIT ? "over" : ""} style={{ width: `${Math.min(100, (c.n / TEAM_LIMIT) * 100)}%` }} /></div>
+            <div key={c.id} className={`team-usage-item ${!unlimited && c.n >= TEAM_LIMIT ? "full" : ""}`}>
+              <span>{c.nome}</span><strong>{unlimited ? `${c.n} ${c.n === 1 ? "pessoa" : "pessoas"}` : `${c.n}/${TEAM_LIMIT}`}</strong>
+              {!unlimited && <div className="progress"><i className={c.n >= TEAM_LIMIT ? "over" : ""} style={{ width: `${Math.min(100, (c.n / TEAM_LIMIT) * 100)}%` }} /></div>}
             </div>
           ))}
         </div>
@@ -246,24 +248,42 @@ export function MyAccount() {
   const [telefone, setTelefone] = useState(profile?.telefone ?? "");
   const [conta, setConta] = useState(account?.nome ?? "");
   const [pass, setPass] = useState("");
+  const [pass2, setPass2] = useState("");
+  const [saving, setSaving] = useState(false);
   const [theme, setThemeState] = useState<Theme>(getTheme());
   const [msg, setMsg] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const lgpd = useRows({ table: "lgpd_requests", eq: { user_id: profile?.id }, order: ["created_at", false], skip: !profile });
   const [asking, setAsking] = useState(false);
 
-  const saveProfile = async (e: React.FormEvent) => {
+  // um único "Salvar" grava os dados, o nome da conta e, se preenchida, a nova senha
+  const saveAll = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("profiles").update({ nome, telefone: telefone || null }).eq("id", profile!.id);
-    if (!error && isOwner && conta !== account?.nome) {
-      const r = await supabase.from("accounts").update({ nome: conta }).eq("id", account!.id);
-      if (r.error) return setMsg({ tone: "error", text: errorMessage(r.error) });
-    }
-    if (error) setMsg({ tone: "error", text: errorMessage(error) }); else { setMsg({ tone: "ok", text: "Dados salvos." }); await reload(); }
-  };
-  const savePass = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await supabase.auth.updateUser({ password: pass });
-    if (error) toast(errorMessage(error), "error"); else { toast("Senha alterada"); setPass(""); }
+    setMsg(null);
+    if (pass && pass.length < 6) return setMsg({ tone: "error", text: "A nova senha precisa ter pelo menos 6 caracteres." });
+    if (pass && pass !== pass2) return setMsg({ tone: "error", text: "As duas senhas não são iguais." });
+    setSaving(true);
+    const feito: string[] = [];
+    try {
+      const { error } = await supabase.from("profiles").update({ nome, telefone: telefone || null }).eq("id", profile!.id);
+      if (error) throw error;
+      feito.push("dados");
+      if (isOwner && conta !== account?.nome) {
+        const r = await supabase.from("accounts").update({ nome: conta }).eq("id", account!.id);
+        if (r.error) throw r.error;
+        feito.push("nome da conta");
+      }
+      if (pass) {
+        const r = await supabase.auth.updateUser({ password: pass });
+        if (r.error) throw r.error;
+        feito.push("senha");
+        setPass(""); setPass2("");
+      }
+      setMsg({ tone: "ok", text: `Salvo: ${feito.join(", ")}.` });
+      toast("Alterações salvas");
+      await reload();
+    } catch (err) {
+      setMsg({ tone: "error", text: `${feito.length ? `Salvo: ${feito.join(", ")}. ` : ""}${errorMessage(err)}` });
+    } finally { setSaving(false); }
   };
   const ask = async (v: Row) => {
     const { error } = await supabase.from("lgpd_requests").insert({ user_id: profile!.id, tipo: v.tipo, detalhes: v.detalhes });
@@ -277,14 +297,19 @@ export function MyAccount() {
     <>
       <PageHeader kicker="Conta" title="Minha conta" actions={<button className="btn btn-ghost btn-sm" onClick={signOut}>Sair</button>} />
       <div className="grid-2-even">
-        <Panel title="Seus dados">
-          <form className="form-stack" onSubmit={saveProfile}>
-            <label className="field"><span>Nome</span><input required value={nome} onChange={(e) => setNome(e.target.value)} /></label>
-            <label className="field"><span>E-mail</span><input value={profile?.email ?? ""} disabled /></label>
-            <label className="field"><span>WhatsApp</span><input value={telefone} onChange={(e) => setTelefone(e.target.value)} /></label>
-            {isOwner && <label className="field"><span>Nome da conta</span><input required value={conta} onChange={(e) => setConta(e.target.value)} /></label>}
+        <Panel title="Seus dados e acesso">
+          <form className="form-stack" onSubmit={saveAll} autoComplete="on">
+            <label className="field"><span>Nome</span><input required value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" /></label>
+            <label className="field"><span>E-mail (login)</span><input name="email" type="email" value={profile?.email ?? ""} readOnly autoComplete="username" /></label>
+            <label className="field"><span>WhatsApp</span><input value={telefone} onChange={(e) => setTelefone(e.target.value)} autoComplete="tel" /></label>
+            {isOwner && <label className="field"><span>Nome da conta</span><input required value={conta} onChange={(e) => setConta(e.target.value)} autoComplete="organization" /></label>}
+            <div className="form-grid">
+              <label className="field half"><span>Nova senha</span><input type="password" name="new-password" minLength={6} value={pass} onChange={(e) => { setPass(e.target.value); if (!e.target.value) setPass2(""); }} autoComplete="new-password" placeholder="Deixe em branco para manter" /></label>
+              <label className="field half"><span>Repita a nova senha</span><input type="password" name="confirm-password" value={pass2} onChange={(e) => setPass2(e.target.value)} autoComplete="new-password" disabled={!pass} /></label>
+            </div>
+            <small className="muted">Ao salvar uma senha nova, o navegador oferece guardá-la para os próximos acessos.</small>
             {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
-            <div><button className="btn btn-primary">Salvar</button></div>
+            <div><button className="btn btn-primary" disabled={saving}>{saving ? "Salvando…" : "Salvar alterações"}</button></div>
           </form>
         </Panel>
         <div className="stack">
@@ -302,12 +327,6 @@ export function MyAccount() {
                 <button key={k} className={`chip ${theme === k ? "active" : ""}`} onClick={() => pick(k)}><Icon size={14} /> {l}</button>
               ))}
             </div>
-          </Panel>
-          <Panel title="Senha">
-            <form className="form-row" onSubmit={savePass}>
-              <label className="field"><span>Nova senha</span><input type="password" minLength={6} required value={pass} onChange={(e) => setPass(e.target.value)} autoComplete="new-password" /></label>
-              <div style={{ alignSelf: "end" }}><button className="btn btn-ghost">Alterar senha</button></div>
-            </form>
           </Panel>
         </div>
       </div>
