@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CalendarPlus, ChevronLeft, ChevronRight, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { Crud, FormModal, type FieldDef } from "../components/Crud";
 import { Badge, EmptyState, Loading, PageHeader, Panel, Tabs, useToast } from "../components/ui";
@@ -28,6 +29,9 @@ function monday(d: Date) { const day = d.getDay(); return addDays(d, day === 0 ?
 
 export function Agenda() {
   const { company, account, canEdit } = useAuth();
+  const nav = useNavigate();
+  // posts agendados pelo agendador abrem lá; publicados abrem aqui para lançar alcance e engajamento
+  const openPost = (p: Row) => (p.profile_id && p.status !== "publicado" ? nav(`/app/social?post=${p.id}`) : setEditing(p));
   const toast = useToast();
   const [start, setStart] = useState(() => monday(new Date()));
   const [editing, setEditing] = useState<Row | null>(null);
@@ -72,7 +76,8 @@ export function Agenda() {
           <button className="btn btn-ghost btn-sm" onClick={() => setStart(addDays(start, -7))} aria-label="Semana anterior"><ChevronLeft size={16} /></button>
           <button className="btn btn-ghost btn-sm" onClick={() => setStart(monday(new Date()))}>Hoje</button>
           <button className="btn btn-ghost btn-sm" onClick={() => setStart(addDays(start, 7))} aria-label="Próxima semana"><ChevronRight size={16} /></button>
-          {canEdit && <button className="btn btn-primary btn-sm" onClick={() => setEditing({ status: "rascunho", rede: "instagram" })}><Plus size={15} /> Novo conteúdo</button>}
+          {canEdit && <button className="btn btn-ghost btn-sm" onClick={() => setEditing({ status: "ideia", rede: "instagram" })}><Plus size={15} /> Anotar pauta</button>}
+          {canEdit && <button className="btn btn-primary btn-sm" onClick={() => nav("/app/social")}><Plus size={15} /> Agendar post</button>}
         </>} />
       <p className="muted small" style={{ marginBottom: 10 }}>{date(toISODate(start))} a {date(toISODate(addDays(start, 6)))}</p>
       {week.loading ? <Loading /> : (
@@ -84,9 +89,9 @@ export function Agenda() {
               <div className={`day ${iso === today ? "day-today" : ""}`} key={iso}>
                 <div className="day-head"><span>{WEEKDAYS[d.getDay()]}</span><span>{d.getDate()}</span></div>
                 {items.map((p) => (
-                  <button key={p.id} className="post-chip" onClick={() => setEditing(p)}>
+                  <button key={p.id} className="post-chip" onClick={() => openPost(p)}>
                     <strong>{p.titulo}</strong>
-                    <small>{new Date(p.data_hora).toTimeString().slice(0, 5)} · {label("rede", p.rede)} · {label("status_post", p.status)}</small>
+                    <small>{new Date(p.data_hora).toTimeString().slice(0, 5)} · {label("rede", p.rede)}{p.canal && p.canal !== "post" ? ` ${label("canal_post", p.canal)}` : ""} · {label("status_post", p.status)}</small>
                   </button>
                 ))}
               </div>
@@ -123,7 +128,7 @@ export function Agenda() {
         <Panel kicker="Sem data" title="Conteúdos aguardando data" className="mt">
           <div className="list">{undated.rows.map((p) => (
             <div className="list-item" key={p.id}><div><strong>{p.titulo}</strong><small>{label("rede", p.rede)} · {label("status_post", p.status)}</small></div>
-              {canEdit && <button className="btn btn-ghost btn-sm" onClick={() => setEditing(p)}>Definir data</button>}</div>
+              {canEdit && <button className="btn btn-ghost btn-sm" onClick={() => openPost(p)}>{p.profile_id ? "Abrir" : "Definir data"}</button>}</div>
           ))}</div>
         </Panel>
       )}
