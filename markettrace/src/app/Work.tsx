@@ -34,7 +34,7 @@ export function Companies() {
     <>
       <PageHeader kicker="Conta" title="Empresas" text="Cada empresa tem seus próprios dados: campanhas, agenda, orçamento, concorrentes. Para agências, cadastre uma por cliente." />
       <Crud
-        table="companies" scope="account" fields={fields} order={["nome"]} newLabel="Nova empresa" defaults={{ ativa: true }}
+        table="companies" scope="account" fields={fields} order={["nome"]} newLabel="Nova empresa" defaults={{ ativa: true }} noCreate={!auth.canCreateCompany}
         empty={{ title: "Nenhuma empresa cadastrada", text: "Cadastre a sua empresa ou a de um cliente para começar." }}
         onRows={() => { void auth.reload(); }}
         rowActions={(r) => r.id === auth.company?.id
