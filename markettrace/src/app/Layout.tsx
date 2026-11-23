@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3, Building2, Calculator, CalendarDays, Headphones, KanbanSquare, LayoutGrid, Lightbulb, LogOut,
   Menu, Palette, Plug, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
@@ -98,6 +98,20 @@ function NoAccount() {
   );
 }
 
+/* ---------- assinatura de quem criou o MarketTrace (editável no backoffice) ---------- */
+export function Signature({ s, className }: { s: ReturnType<typeof useSiteSettings>; className: string }) {
+  const nome = s.assinatura_nome || s.contato_nome;
+  const body = s.assinatura_estilo === "logo" && s.assinatura_logo_url
+    ? <img src={s.assinatura_logo_url} alt={nome} />
+    : <strong>{nome}</strong>;
+  return (
+    <div className={className}>
+      {s.assinatura_rotulo && <span>{s.assinatura_rotulo}</span>}
+      {s.assinatura_link ? <a href={s.assinatura_link} target="_blank" rel="noreferrer">{body}</a> : body}
+    </div>
+  );
+}
+
 const NAV = [
   { label: "Do dado à decisão", items: [
     { to: "/app", label: "Visão geral", icon: LayoutGrid, end: true },
@@ -135,6 +149,7 @@ export default function AppLayout() {
   const auth = useAuth();
   const s = useSiteSettings();
   const loc = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [loc.pathname]);
   const c = auth.company;
@@ -168,8 +183,9 @@ export default function AppLayout() {
             {company?.logo_url ? <img src={company.logo_url} alt="" /> : company?.nome === "MCI Store" ? <img src="/brand/mci-white.png" alt="" /> : initials(company?.nome)}
           </span>
           {companies.length ? (
-            <select value={company?.id} onChange={(e) => auth.setCompanyId(e.target.value)} aria-label="Empresa">
+            <select value={company?.id} onChange={(e) => (e.target.value === "__nova" ? navigate("/app/empresas?nova=1") : auth.setCompanyId(e.target.value))} aria-label="Empresa">
               {companies.map((c) => <option key={c.id} value={c.id}>{c.nome}{c.ativa ? "" : " (arquivada)"}</option>)}
+              {auth.canCreateCompany && <option value="__nova">+ Adicionar empresa</option>}
             </select>
           ) : <Link to="/app/empresas" style={{ color: "var(--papel)", fontSize: 14 }}>Cadastrar empresa</Link>}
         </div>
@@ -185,7 +201,7 @@ export default function AppLayout() {
         )}
 
         <div className="side-bottom">
-          <div className="side-credit"><span>Produto idealizado por</span><img src="/brand/evelyn-light.png" alt={s.contato_nome} /></div>
+          <Signature s={s} className="side-credit" />
           <div className="user-row">
             <span className="avatar">{initials(profile?.nome)}</span>
             <div><strong>{profile?.nome}</strong><small>{account.nome}</small></div>
