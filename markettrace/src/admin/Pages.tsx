@@ -249,6 +249,7 @@ export function AdminPlans() {
     { key: "preco_anual", label: "Preço anual total (R$)", type: "money", half: true, list: true, help: "Opcional. Se preenchido, o site mostra a opção anual." },
     { key: "limite_empresas", label: "Limite de empresas", type: "number", half: true, list: true, help: "Vazio = ilimitado", format: (v) => (v == null ? "Ilimitado" : String(v)) },
     { key: "limite_usuarios", label: "Limite de usuários", type: "number", half: true, list: true, help: "Vazio = ilimitado", format: (v) => (v == null ? "Ilimitado" : String(v)) },
+    { key: "ia_mensagens_mes", label: "Mensagens de IA por mês", type: "number", half: true, list: true, help: "Vazio = ilimitado · 0 = plano sem IA", format: (v) => (v == null ? "Ilimitado" : v === 0 ? "Sem IA" : String(v)) },
     { key: "recursos", label: "Recursos (separe por vírgula)", type: "tags", placeholder: "Calculadoras, Agenda editorial, Suporte prioritário" },
     { key: "ordem", label: "Ordem no site", type: "number", half: true },
     { key: "destaque", label: "Destacar como “mais escolhido”", type: "checkbox", half: true },
