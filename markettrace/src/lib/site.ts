@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   contato_nome: "Evelyn Gonçalves",
   contato_cargo: "Profissional de Marketing · idealizadora do MarketTrace",
   contato_email: "evelyngoncalves.marketing@gmail.com",
-  contato_whatsapp: "(85) 99818-4302",
+  contato_whatsapp: "Conversar no WhatsApp",
   contato_whatsapp_link: "https://wa.me/message/QLNPISU2BUG7J1",
   contato_instagram: "@evelyn.namidia",
   contato_linkedin: "https://www.linkedin.com/in/evelyn-goncalves-oficial/",
