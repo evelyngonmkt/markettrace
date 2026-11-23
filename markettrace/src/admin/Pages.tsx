@@ -1,3 +1,4 @@
+import { Signature } from "../app/Layout";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, MessageCircle, Plus, Trash2 } from "lucide-react";
@@ -63,7 +64,7 @@ export function AdminHome() {
 /* ======================= ASSINANTES ======================= */
 function AccountDetail({ acc, plans, onClose, onSaved }: { acc: Row; plans: Row[]; onClose: () => void; onSaved: () => void }) {
   const toast = useToast();
-  const [f, setF] = useState({ status: acc.status, plan_id: acc.plan_id ?? "", trial_ate: acc.trial_ate ?? "", ciclo: acc.ciclo });
+  const [f, setF] = useState({ status: acc.status, plan_id: acc.plan_id ?? "", trial_ate: acc.trial_ate ?? "", ciclo: acc.ciclo, ilimitado: !!acc.ilimitado });
   const [error, setError] = useState("");
   const companies = useRows({ table: "companies", select: "id,nome,segmento,ativa", eq: { account_id: acc.id }, order: ["nome"] });
   const members = useRows({ table: "account_members", select: "papel, profiles(nome,email)", eq: { account_id: acc.id } });
@@ -71,6 +72,10 @@ function AccountDetail({ acc, plans, onClose, onSaved }: { acc: Row; plans: Row[
   const save = async () => {
     const { error: err } = await supabase.rpc("admin_update_account", { p_account: acc.id, p_status: f.status, p_plan: f.plan_id || null, p_trial_ate: f.trial_ate || null, p_ciclo: f.ciclo });
     if (err) return setError(errorMessage(err));
+    if (f.ilimitado !== !!acc.ilimitado) {
+      const r = await supabase.rpc("admin_set_unlimited", { p_account: acc.id, p_value: f.ilimitado });
+      if (r.error) return setError(errorMessage(r.error));
+    }
     toast("Conta atualizada"); onSaved(); onClose();
   };
   return (
@@ -81,6 +86,7 @@ function AccountDetail({ acc, plans, onClose, onSaved }: { acc: Row; plans: Row[
         <label className="field half"><span>Plano</span><select value={f.plan_id} onChange={(e) => setF({ ...f, plan_id: e.target.value })}><option value="">Sem plano</option>{plans.map((p) => <option key={p.id} value={p.id}>{p.nome}{p.ativo ? "" : " (inativo)"}</option>)}</select></label>
         <label className="field half"><span>Teste grátis até</span><input type="date" value={f.trial_ate} onChange={(e) => setF({ ...f, trial_ate: e.target.value })} /></label>
         <label className="field half"><span>Cobrança</span><select value={f.ciclo} onChange={(e) => setF({ ...f, ciclo: e.target.value })}><option value="mensal">Mensal</option><option value="anual">Anual</option></select></label>
+        <label className="check full"><input type="checkbox" checked={f.ilimitado} onChange={(e) => setF({ ...f, ilimitado: e.target.checked })} /> Conta ilimitada: sem limite de empresas, usuários e pessoas por empresa (ex.: sua conta e cortesias)</label>
         <div className="full"><Notice tone="error">{error}</Notice></div>
         <div className="full form-actions"><button className="btn btn-primary" onClick={save}>Salvar alterações</button></div>
       </div>
@@ -300,6 +306,20 @@ export function AdminSite() {
                   : <input value={String(data[f.key] ?? "")} onChange={(e) => setData({ ...data, [f.key]: e.target.value })} />}
               </label>
             ))}
+          </div>
+        </Panel>
+        <Panel title="Assinatura" kicker="Rodapé do menu do app e do site">
+          <div className="form-stack">
+            <label className="field"><span>Frase antes do nome</span><input value={data.assinatura_rotulo} onChange={(e) => setData({ ...data, assinatura_rotulo: e.target.value })} placeholder="Ex.: Uma criação de, Desenvolvido por, Por" /></label>
+            <label className="field"><span>Nome que aparece</span><input value={data.assinatura_nome} onChange={(e) => setData({ ...data, assinatura_nome: e.target.value })} placeholder="Seu nome ou o nome do seu estúdio" /></label>
+            <label className="field"><span>Como mostrar</span>
+              <select value={data.assinatura_estilo} onChange={(e) => setData({ ...data, assinatura_estilo: e.target.value as "texto" | "logo" })}>
+                <option value="texto">Só o nome, em texto</option>
+                <option value="logo">Logomarca (imagem)</option>
+              </select></label>
+            {data.assinatura_estilo === "logo" && <label className="field"><span>Endereço da logomarca (clara, para fundo escuro)</span><input value={data.assinatura_logo_url} onChange={(e) => setData({ ...data, assinatura_logo_url: e.target.value })} placeholder="https://" /></label>}
+            <label className="field"><span>Link ao clicar (opcional)</span><input type="url" value={data.assinatura_link} onChange={(e) => setData({ ...data, assinatura_link: e.target.value })} placeholder="https:// (portfólio, site ou Instagram)" /></label>
+            <div className="side-preview"><Signature s={data} className="side-credit" /></div>
           </div>
         </Panel>
         <Panel title="Portfólio" actions={<button className="btn btn-ghost btn-sm" onClick={() => setData({ ...data, portfolio: [...data.portfolio, { titulo: "" }] })}><Plus size={14} /> Adicionar trabalho</button>}>
