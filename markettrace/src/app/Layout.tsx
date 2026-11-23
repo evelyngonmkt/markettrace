@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   BarChart3, Building2, Calculator, CalendarDays, Headphones, KanbanSquare, LayoutGrid, Lightbulb, LogOut,
-  Menu, Plug, Radar, Settings, ShieldCheck, Store, Users, Wallet,
+  Menu, Plug, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
 } from "lucide-react";
 import { EmptyState, Loading, Logo, Notice } from "../components/ui";
 import { useAuth } from "../lib/auth";
@@ -92,8 +92,11 @@ const NAV = [
     { to: "/app/campanhas", label: "Campanhas & métricas", icon: BarChart3 },
     { to: "/app/calculadoras", label: "Calculadoras", icon: Calculator },
   ] },
-  { label: "Planejamento", items: [
+  { label: "Social media", items: [
+    { to: "/app/social", label: "Agendar post", icon: Send },
     { to: "/app/agenda", label: "Agenda editorial", icon: CalendarDays },
+  ] },
+  { label: "Planejamento", items: [
     { to: "/app/tarefas", label: "Rotinas & tarefas", icon: KanbanSquare },
     { to: "/app/orcamentos", label: "Orçamentos", icon: Wallet },
     { to: "/app/canais-de-venda", label: "Canais de venda", icon: Store },
