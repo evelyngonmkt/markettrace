@@ -37,7 +37,7 @@ export default function SiteLayout() {
           <div>
             <Logo size={22} light />
             <p className="footer-tag">Do dado à decisão.</p>
-            <p className="footer-credit">Produto idealizado por <strong>{s.contato_nome}</strong></p>
+            <p className="footer-credit">{s.assinatura_rotulo || "Uma criação de"} {s.assinatura_link ? <a href={s.assinatura_link} target="_blank" rel="noreferrer"><strong>{s.assinatura_nome || s.contato_nome}</strong></a> : <strong>{s.assinatura_nome || s.contato_nome}</strong>}</p>
           </div>
           <div>
             <span className="data-label">Produto</span>
