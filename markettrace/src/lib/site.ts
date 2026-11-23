@@ -14,6 +14,12 @@ export type SiteSettings = {
   contato_linkedin: string;
   portfolio_link: string;
   portfolio: PortfolioItem[];
+  /** assinatura no rodapé do menu do app e do site */
+  assinatura_rotulo: string;
+  assinatura_nome: string;
+  assinatura_estilo: "texto" | "logo";
+  assinatura_logo_url: string;
+  assinatura_link: string;
 };
 
 // Valores usados enquanto o banco carrega (os mesmos do script do banco)
@@ -30,6 +36,11 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   contato_linkedin: "https://www.linkedin.com/in/evelyn-goncalves-oficial/",
   portfolio_link: "",
   portfolio: [],
+  assinatura_rotulo: "Uma criação de",
+  assinatura_nome: "Evelyn Gonçalves",
+  assinatura_estilo: "texto",
+  assinatura_logo_url: "/brand/evelyn-light.png",
+  assinatura_link: "",
 };
 
 let cache: SiteSettings | null = null;
