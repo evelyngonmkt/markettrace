@@ -5,6 +5,8 @@ export type PortfolioItem = { titulo: string; descricao?: string; link?: string;
 export type SiteSettings = {
   hero_titulo: string;
   hero_subtitulo: string;
+  /** vídeo opcional no topo da página inicial (YouTube, Vimeo ou .mp4) */
+  hero_video_url: string;
   contato_nome: string;
   contato_cargo: string;
   contato_email: string;
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   hero_titulo: "Do dado à decisão.",
   hero_subtitulo:
     "Pesquisa, conteúdo, mídia, orçamento e indicadores no mesmo fluxo de trabalho. Para quem cria, para quem analisa e para quem precisa decidir.",
+  hero_video_url: "",
   contato_nome: "Evelyn Gonçalves",
   contato_cargo: "Profissional de Marketing · idealizadora do MarketTrace",
   contato_email: "evelyngoncalves.marketing@gmail.com",
