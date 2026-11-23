@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Crud, type FieldDef } from "../components/Crud";
+import { MonthPicker } from "../components/MonthPicker";
 import { Badge, EmptyState, HBars, PageHeader, Panel, Stat, Tabs } from "../components/ui";
 import { useAuth } from "../lib/auth";
 import { groupBy, sum, useRows, type Row } from "../lib/data";
@@ -12,10 +13,7 @@ import {
 function useMonth() {
   const [mes, setMes] = useState(firstOfMonth());
   const picker = (
-    <label className="field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <span>Mês</span>
-      <input type="month" value={mes.slice(0, 7)} onChange={(e) => e.target.value && setMes(`${e.target.value}-01`)} style={{ width: "auto" }} />
-    </label>
+    <MonthPicker value={mes} onChange={setMes} />
   );
   return { mes, fim: lastOfMonth(mes), picker };
 }
@@ -101,7 +99,7 @@ export function Campaigns() {
       <PageHeader kicker="Do dado à decisão" title="Campanhas & métricas" text="Cadastre as campanhas e lance os resultados por dia e por canal. Enquanto as integrações não chegam, é aqui que os números entram." actions={<Tabs value={tab} onChange={setTab} items={[{ value: "metricas", label: "Métricas" }, { value: "campanhas", label: "Campanhas" }]} />} />
       {tab === "metricas" ? (
         <>
-          <div className="toolbar">{picker}<span className="muted small">{monthLabel(mes)}</span></div>
+          <div className="toolbar">{picker}</div>
           <Crud table="metrics" fields={metricFields} gte={["data", mes]} lte={["data", fim]} order={["data", false]} newLabel="Lançar métricas"
             defaults={{ data: new Date().toISOString().slice(0, 10) }} summary={summary}
             empty={{ title: "Nenhuma métrica neste mês", text: "Lance investimento, receita e conversões por canal para acompanhar o resultado." }} />
