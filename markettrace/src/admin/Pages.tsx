@@ -268,6 +268,7 @@ export function AdminPlans() {
 const SITE_FIELDS: Array<{ key: keyof SiteSettings; label: string; textarea?: boolean }> = [
   { key: "hero_titulo", label: "Título principal da página inicial" },
   { key: "hero_subtitulo", label: "Subtítulo da página inicial", textarea: true },
+  { key: "hero_video_url", label: "Vídeo do topo (opcional): link do YouTube, Vimeo ou arquivo .mp4. Vazio = animação do produto" },
   { key: "contato_nome", label: "Nome" },
   { key: "contato_cargo", label: "Cargo / descrição" },
   { key: "contato_email", label: "E-mail de contato" },
