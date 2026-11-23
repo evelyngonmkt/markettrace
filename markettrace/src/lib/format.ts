@@ -55,6 +55,7 @@ export const LABELS: Record<string, Record<string, string>> = {
   tipo_conta: { agencia: "Agência", profissional: "Profissional autônomo", empresa: "Empresa / time interno" },
   papel: { owner: "Dono(a)", editor: "Editor", leitor: "Leitor" },
   status_campanha: { planejada: "Planejada", ativa: "Ativa", pausada: "Pausada", encerrada: "Encerrada" },
+  canal_post: { feed: "Feed", stories: "Stories", reels: "Reels", post: "Post" },
   status_post: { ideia: "Ideia", rascunho: "Rascunho", aprovado: "Aprovado", agendado: "Agendado", publicado: "Publicado" },
   status_tarefa: { a_fazer: "A fazer", em_andamento: "Em andamento", concluido: "Concluído" },
   status_ideia: { nova: "Nova", em_briefing: "Em briefing", aprovada: "Aprovada", descartada: "Descartada" },
