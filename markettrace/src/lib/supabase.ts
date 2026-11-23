@@ -24,6 +24,7 @@ export function errorMessage(err: unknown): string {
     [/Password should be at least/i, "A senha precisa ter pelo menos 6 caracteres."],
     [/rate limit/i, "Muitas tentativas seguidas. Aguarde um minuto e tente de novo."],
     [/row-level security|permission denied/i, "Você não tem permissão para fazer isso."],
+    [/Edge Function returned|FunctionsRelayError|FunctionsFetchError/i, "O serviço não respondeu agora. Tente de novo em instantes."],
     [/Failed to fetch|NetworkError/i, "Sem conexão com o servidor. Verifique a internet e tente de novo."],
   ];
   for (const [re, msg] of map) if (re.test(raw)) return msg;
