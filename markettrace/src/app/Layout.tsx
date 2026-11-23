@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   BarChart3, Building2, Calculator, CalendarDays, Headphones, KanbanSquare, LayoutGrid, Lightbulb, LogOut,
-  Menu, Plug, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
+  Menu, Palette, Plug, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
 } from "lucide-react";
 import { EmptyState, Loading, Logo, Notice } from "../components/ui";
 import { useAuth } from "../lib/auth";
 import { date } from "../lib/format";
 import { configured, errorMessage, supabase } from "../lib/supabase";
 import { useSiteSettings } from "../lib/site";
+import { applyBrand } from "../lib/brand";
 
 /* ---------- tema claro/escuro/sistema (vale para app e admin) ---------- */
 export type Theme = "system" | "light" | "dark";
@@ -55,6 +56,17 @@ export function useGuard() {
   if (!configured) return <SetupScreen />;
   if (!auth.ready) return <Loading />;
   if (!auth.session) return <Navigate to={`/entrar?voltar=${encodeURIComponent(loc.pathname)}`} replace />;
+  if (!auth.profile && auth.loadError) return (
+    <div className="setup">
+      <Logo />
+      <h1>Não conseguimos carregar sua conta</h1>
+      <p className="muted">O servidor respondeu: <code>{auth.loadError}</code></p>
+      <div className="form-actions" style={{ justifyContent: "flex-start" }}>
+        <button className="btn btn-primary" onClick={() => void auth.reload()}>Tentar de novo</button>
+        <a href="mailto:evelyngoncalves.marketing@gmail.com" className="btn btn-ghost">Avisar o suporte</a>
+      </div>
+    </div>
+  );
   if (!auth.profile) return <Loading text="Preparando sua conta…" />;
   return null;
 }
@@ -108,6 +120,7 @@ const NAV = [
   { label: "Conta", items: [
     { to: "/app/integracoes", label: "Integrações", icon: Plug },
     { to: "/app/empresas", label: "Empresas", icon: Building2 },
+    { to: "/app/identidade", label: "Identidade visual", icon: Palette },
     { to: "/app/equipe", label: "Equipe", icon: Users },
     { to: "/app/suporte", label: "Suporte", icon: Headphones },
     { to: "/app/conta", label: "Minha conta", icon: Settings },
@@ -124,6 +137,9 @@ export default function AppLayout() {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [loc.pathname]);
+  const c = auth.company;
+  useEffect(() => applyBrand(c ? { cor_destaque: c.cor_destaque, cor_apoio: c.cor_apoio, fonte_titulos: c.fonte_titulos, fonte_texto: c.fonte_texto, usar_identidade: c.usar_identidade } : null),
+    [c?.id, c?.cor_destaque, c?.cor_apoio, c?.fonte_titulos, c?.fonte_texto, c?.usar_identidade]); // eslint-disable-line react-hooks/exhaustive-deps
   if (blocked) return blocked;
   if (!auth.account) return <NoAccount />;
 
