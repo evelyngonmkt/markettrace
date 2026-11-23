@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  BarChart3, Building2, Calculator, CalendarDays, Headphones, KanbanSquare, LayoutGrid, Lightbulb, LogOut,
+  BarChart3, Bell, Building2, Download, Calculator, CalendarDays, Headphones, KanbanSquare, LayoutGrid, Lightbulb, LogOut,
   Menu, Palette, Plug, Sparkles, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
 } from "lucide-react";
 import { EmptyState, Loading, Logo, Notice } from "../components/ui";
@@ -10,6 +10,7 @@ import { date } from "../lib/format";
 import { configured, errorMessage, supabase } from "../lib/supabase";
 import { useSiteSettings } from "../lib/site";
 import { applyBrand } from "../lib/brand";
+import { useInstall } from "../lib/pwa";
 
 /* ---------- tema claro/escuro/sistema (vale para app e admin) ---------- */
 export type Theme = "system" | "light" | "dark";
@@ -137,12 +138,13 @@ const NAV = [
     { to: "/app/empresas", label: "Empresas", icon: Building2 },
     { to: "/app/identidade", label: "Identidade visual", icon: Palette },
     { to: "/app/equipe", label: "Equipe", icon: Users },
+    { to: "/app/notificacoes", label: "App e notificações", icon: Bell },
     { to: "/app/suporte", label: "Suporte", icon: Headphones },
     { to: "/app/conta", label: "Minha conta", icon: Settings },
   ] },
 ];
 // páginas que funcionam mesmo sem empresa cadastrada
-const NO_COMPANY_OK = ["/app/empresas", "/app/equipe", "/app/suporte", "/app/conta", "/app/integracoes", "/app/calculadoras"];
+const NO_COMPANY_OK = ["/app/notificacoes", "/app/empresas", "/app/equipe", "/app/suporte", "/app/conta", "/app/integracoes", "/app/calculadoras"];
 
 export default function AppLayout() {
   useThemeWhileMounted();
@@ -151,6 +153,7 @@ export default function AppLayout() {
   const s = useSiteSettings();
   const loc = useLocation();
   const navigate = useNavigate();
+  const inst = useInstall();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [loc.pathname]);
   const c = auth.company;
@@ -202,6 +205,7 @@ export default function AppLayout() {
         )}
 
         <div className="side-bottom">
+          {inst.canPrompt && !inst.installed && <button className="side-install" onClick={() => void inst.install()}><Download size={15} /> Instalar o app no aparelho</button>}
           <Signature s={s} className="side-credit" />
           <div className="user-row">
             <span className="avatar">{initials(profile?.nome)}</span>
