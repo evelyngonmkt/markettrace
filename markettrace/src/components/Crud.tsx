@@ -149,6 +149,8 @@ type CrudProps = {
   noDelete?: boolean;
   select?: string;
   onRows?: (rows: Row[]) => void;
+  /** abre o formulário de cadastro assim que a página carrega */
+  openNew?: boolean;
 };
 
 export function Crud(p: CrudProps) {
@@ -159,7 +161,7 @@ export function Crud(p: CrudProps) {
   const scopeEq = scope === "company" ? { company_id: company?.id } : scope === "account" ? { account_id: account?.id } : {};
   const skip = (scope === "company" && !company) || (scope === "account" && !account);
   const { rows, loading, error, reload } = useRows({ table: p.table, select: p.select, eq: { ...scopeEq, ...p.eq }, gte: p.gte, lte: p.lte, order: p.order ?? ["created_at", false], skip });
-  const [editing, setEditing] = useState<Row | null>(null);
+  const [editing, setEditing] = useState<Row | null>(p.openNew && !p.noCreate ? { ...p.defaults } : null);
   // avisa a página "mãe" quando as linhas mudam (para resumos e gráficos)
   const onRowsRef = useRef(p.onRows);
   onRowsRef.current = p.onRows;
