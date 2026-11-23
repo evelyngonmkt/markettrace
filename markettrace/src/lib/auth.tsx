@@ -8,10 +8,12 @@ export type Account = {
   plan_id: string | null; owner_id: string; papel: string; empresas: string[] | null;
   plans?: { nome: string; limite_empresas: number | null; limite_usuarios: number | null } | null;
 };
-export type Company = { id: string; account_id: string; nome: string; segmento: string | null; site: string | null; instagram: string | null; logo_url: string | null; ativa: boolean };
+export type Company = { id: string; account_id: string; nome: string; segmento: string | null; site: string | null; instagram: string | null; logo_url: string | null; ativa: boolean;
+  cor_destaque?: string | null; cor_apoio?: string | null; fonte_titulos?: string | null; fonte_texto?: string | null; usar_identidade?: boolean };
 
 type AuthState = {
   ready: boolean;
+  loadError: string | null;
   session: Session | null;
   profile: Profile | null;
   accounts: Account[];
@@ -37,6 +39,7 @@ const store = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(!configured);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -53,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("papel, empresas, accounts(id,nome,tipo,status,trial_ate,ciclo,plan_id,owner_id, plans(nome,limite_empresas,limite_usuarios))")
         .eq("user_id", uid),
     ]);
+    setLoadError(p.error ? p.error.message : m.error ? m.error.message : null);
     setProfile((p.data as Profile) ?? null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accs = ((m.data ?? []) as any[]).filter((r) => r.accounts).map((r) => ({ ...r.accounts, papel: r.papel, empresas: r.empresas ?? null })) as Account[];
@@ -90,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value: AuthState = {
-    ready, session, profile, accounts, account,
+    ready, loadError, session, profile, accounts, account,
     companies: accountCompanies, company,
     canEdit: account ? ["owner", "editor"].includes(account.papel) : false,
     isOwner: account?.papel === "owner",
