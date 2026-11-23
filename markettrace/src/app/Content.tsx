@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CalendarPlus, ChevronLeft, ChevronRight, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, ChevronLeft, ChevronRight, Download, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
+import { buildIcs, downloadIcs } from "../lib/ics";
 import { Crud, FormModal, type FieldDef } from "../components/Crud";
 import { Badge, EmptyState, Loading, PageHeader, Panel, Tabs, useToast } from "../components/ui";
 import { useAuth } from "../lib/auth";
@@ -26,6 +27,9 @@ const postFields: FieldDef[] = [
 const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 
 function monday(d: Date) { const day = d.getDay(); return addDays(d, day === 0 ? -6 : 1 - day); }
+const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+type View = "mes" | "semana";
+const getView = (): View => { try { return localStorage.getItem("mt.agenda") === "semana" ? "semana" : "mes"; } catch { return "mes"; } };
 
 export function Agenda() {
   const { company, account, canEdit } = useAuth();
@@ -33,10 +37,36 @@ export function Agenda() {
   // posts agendados pelo agendador abrem lá; publicados abrem aqui para lançar alcance e engajamento
   const openPost = (p: Row) => (p.profile_id && p.status !== "publicado" ? nav(`/app/social?post=${p.id}`) : setEditing(p));
   const toast = useToast();
-  const [start, setStart] = useState(() => monday(new Date()));
+  const [view, setViewState] = useState<View>(getView);
+  const setView = (v: View) => { try { localStorage.setItem("mt.agenda", v); } catch { /* sem armazenamento */ } setViewState(v); };
+  const [ref, setRef] = useState(() => new Date());
   const [editing, setEditing] = useState<Row | null>(null);
-  const end = addDays(start, 7);
+  // mês: grade de 6 semanas começando na segunda; semana: 7 dias
+  const firstOfMonth = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const start = view === "mes" ? monday(firstOfMonth) : monday(ref);
+  const days = view === "mes" ? 42 : 7;
+  const end = addDays(start, days);
   const week = useRows({ table: "posts", eq: { company_id: company?.id }, gte: ["data_hora", start.toISOString()], lte: ["data_hora", end.toISOString()], order: ["data_hora"], skip: !company });
+  const move = (dir: number) => setRef(view === "mes" ? new Date(ref.getFullYear(), ref.getMonth() + dir, 1) : addDays(ref, 7 * dir));
+  const periodo = view === "mes" ? `${MONTHS[ref.getMonth()][0].toUpperCase()}${MONTHS[ref.getMonth()].slice(1)} de ${ref.getFullYear()}` : `${date(toISODate(start))} a ${date(toISODate(addDays(start, 6)))}`;
+  const newOn = (d: Date) => setEditing({ status: "ideia", rede: "instagram", data_hora: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9).toISOString() });
+  const exportIcs = () => {
+    const visiveis = week.rows.filter((p) => p.data_hora && (view === "semana" || new Date(p.data_hora).getMonth() === ref.getMonth()));
+    if (!visiveis.length) return toast("Não há conteúdos com data neste período.", "error");
+    const ics = buildIcs(`${company?.nome} · Agenda editorial`, visiveis.map((p) => ({
+      uid: p.id, start: new Date(p.data_hora), title: `${p.titulo} · ${label("rede", p.rede)}`,
+      description: [`Status: ${label("status_post", p.status)}`, p.formato ? `Formato: ${p.formato}` : "", p.legenda ?? ""].filter(Boolean).join("\n"),
+      url: p.link || undefined,
+    })));
+    downloadIcs(`agenda-${(company?.nome ?? "empresa").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${view === "mes" ? `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}` : toISODate(start)}.ics`, ics);
+    toast(`${visiveis.length} conteúdo(s) exportado(s). Importe o arquivo no Google Agenda.`);
+  };
+  const chip = (p: Row, compact = false) => (
+    <button key={p.id} className={`post-chip st-${p.status}`} onClick={() => openPost(p)} title={`${p.titulo} · ${label("status_post", p.status)}`}>
+      <strong>{compact ? `${new Date(p.data_hora).toTimeString().slice(0, 5)} ${p.titulo}` : p.titulo}</strong>
+      {!compact && <small>{new Date(p.data_hora).toTimeString().slice(0, 5)} · {label("rede", p.rede)}{p.canal && p.canal !== "post" ? ` ${label("canal_post", p.canal)}` : ""} · {label("status_post", p.status)}</small>}
+    </button>
+  );
   const undated = useRows({ table: "posts", eq: { company_id: company?.id, data_hora: null }, order: ["created_at", false], skip: !company });
   const published = useRows({ table: "posts", eq: { company_id: company?.id, status: "publicado" }, order: ["engajamento", false], skip: !company });
 
@@ -71,16 +101,41 @@ export function Agenda() {
 
   return (
     <>
-      <PageHeader kicker="Planejamento" title="Agenda editorial" text="Planeje a semana por rede social e acompanhe cada conteúdo da ideia à publicação."
+      <PageHeader kicker="Planejamento" title="Agenda editorial" text="Planeje o mês e a semana por rede social e acompanhe cada conteúdo da ideia à publicação."
         actions={<>
-          <button className="btn btn-ghost btn-sm" onClick={() => setStart(addDays(start, -7))} aria-label="Semana anterior"><ChevronLeft size={16} /></button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setStart(monday(new Date()))}>Hoje</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setStart(addDays(start, 7))} aria-label="Próxima semana"><ChevronRight size={16} /></button>
+          <button className="btn btn-ghost btn-sm" onClick={exportIcs} title="Baixa um arquivo .ics para importar no Google Agenda, Outlook ou Apple"><Download size={15} /> Exportar para agenda</button>
           {canEdit && <button className="btn btn-ghost btn-sm" onClick={() => setEditing({ status: "ideia", rede: "instagram" })}><Plus size={15} /> Anotar pauta</button>}
           {canEdit && <button className="btn btn-primary btn-sm" onClick={() => nav("/app/social")}><Plus size={15} /> Agendar post</button>}
         </>} />
-      <p className="muted small" style={{ marginBottom: 10 }}>{date(toISODate(start))} a {date(toISODate(addDays(start, 6)))}</p>
-      {week.loading ? <Loading /> : (
+      <div className="cal-bar">
+        <div className="cal-nav">
+          <button className="btn btn-ghost btn-sm" onClick={() => move(-1)} aria-label={view === "mes" ? "Mês anterior" : "Semana anterior"}><ChevronLeft size={16} /></button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setRef(new Date())}>Hoje</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => move(1)} aria-label={view === "mes" ? "Próximo mês" : "Próxima semana"}><ChevronRight size={16} /></button>
+          <h2 className="cal-title">{periodo}</h2>
+        </div>
+        <Tabs value={view} onChange={setView} items={[{ value: "mes", label: "Mês" }, { value: "semana", label: "Semana" }]} />
+      </div>
+      {week.loading ? <Loading /> : view === "mes" ? (
+        <div className="month">
+          {["seg", "ter", "qua", "qui", "sex", "sáb", "dom"].map((w) => <span key={w} className="month-dow">{w}</span>)}
+          {Array.from({ length: 42 }, (_, i) => {
+            const d = addDays(start, i); const iso = toISODate(d);
+            const items = week.rows.filter((p) => toISODate(new Date(p.data_hora)) === iso);
+            const fora = d.getMonth() !== ref.getMonth();
+            return (
+              <div className={`mday ${iso === today ? "day-today" : ""} ${fora ? "fora" : ""}`} key={iso}>
+                <div className="mday-head">
+                  <span>{d.getDate()}</span>
+                  {canEdit && <button className="icon-btn mday-add" onClick={() => newOn(d)} title={`Anotar pauta em ${date(iso)}`} aria-label={`Anotar pauta em ${date(iso)}`}><Plus size={13} /></button>}
+                </div>
+                {items.slice(0, 3).map((p) => chip(p, true))}
+                {items.length > 3 && <button className="mday-more" onClick={() => { setRef(d); setView("semana"); }}>+{items.length - 3} na semana</button>}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
         <div className="week">
           {Array.from({ length: 7 }, (_, i) => {
             const d = addDays(start, i); const iso = toISODate(d);
@@ -88,12 +143,7 @@ export function Agenda() {
             return (
               <div className={`day ${iso === today ? "day-today" : ""}`} key={iso}>
                 <div className="day-head"><span>{WEEKDAYS[d.getDay()]}</span><span>{d.getDate()}</span></div>
-                {items.map((p) => (
-                  <button key={p.id} className="post-chip" onClick={() => openPost(p)}>
-                    <strong>{p.titulo}</strong>
-                    <small>{new Date(p.data_hora).toTimeString().slice(0, 5)} · {label("rede", p.rede)}{p.canal && p.canal !== "post" ? ` ${label("canal_post", p.canal)}` : ""} · {label("status_post", p.status)}</small>
-                  </button>
-                ))}
+                {items.map((p) => chip(p))}
               </div>
             );
           })}
