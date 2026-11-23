@@ -39,6 +39,7 @@ const AdminLgpd = lazy(() => AdminPages().then((m) => ({ default: m.AdminLgpd })
 const AdminAudit = lazy(() => AdminPages().then((m) => ({ default: m.AdminAudit })));
 const AdminAI = lazy(() => import("./admin/AI").then((m) => ({ default: m.AdminAI })));
 const SuperIA = lazy(() => import("./app/SuperIA"));
+const Device = lazy(() => import("./app/Device"));
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -78,6 +79,7 @@ export default function App() {
             <Route path="empresas" element={<Companies />} />
             <Route path="identidade" element={<Identity />} />
             <Route path="ia" element={<SuperIA />} />
+            <Route path="notificacoes" element={<Device />} />
             <Route path="campanhas" element={<Campaigns />} />
             <Route path="calculadoras" element={<Calculators />} />
             <Route path="social" element={<Social />} />

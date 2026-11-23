@@ -944,3 +944,99 @@ a:hover > .logo .mark-dot, .logo:hover .mark-dot { animation: mark-bounce .9s; t
   .mod2-trace rect { transition: none; }
 }
 .brand-band + .site-footer, .site-footer { border-top: 1px solid #2C3B35; }
+
+/* ===== ajuste: fundos variados e ciclo com ponto em movimento ===== */
+.band-ink { background: var(--tinta); color: var(--papel); }
+.band-ink .kicker { color: #7FB3BF; }
+.band-ink .section-head h2 { color: var(--papel); }
+.band-ink .flow2-step p { color: var(--musgo); }
+.band-nevoa2 { background: var(--nevoa); }
+.band-nevoa2 .module { background: var(--papel); }
+.ticker-polen { background: var(--polen); border-color: var(--polen); }
+.ticker-polen span { color: var(--tinta); }
+.ticker-polen i { color: var(--tinta); }
+
+.flow3 { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; padding-top: 34px; --step: calc((100% + 18px) / 5); }
+.flow3-track { position: absolute; top: 0; left: 0; right: 0; height: 16px; }
+.flow3-line { position: absolute; top: 7px; left: 7px; height: 2px; width: calc(var(--step) * 4); background: currentColor; opacity: .9; transform: scaleX(0); transform-origin: left; transition: transform 1.4s ease; }
+.flow3.in .flow3-line { transform: scaleX(1); }
+.flow3-node { position: absolute; top: 1px; left: calc(var(--step) * var(--i)); width: 14px; height: 14px; border-radius: 50%; background: var(--tinta); border: 2px solid var(--papel); box-sizing: border-box; transition: background .3s; }
+.flow3.in .flow3-node { animation: flow3-node 7.5s infinite; animation-delay: calc(var(--i) * 1.5s); }
+@keyframes flow3-node { 0%, 3% { background: var(--tinta); transform: scale(1); } 6%, 16% { background: var(--sinal); border-color: var(--sinal); transform: scale(1.25); } 20%, 100% { background: var(--tinta); border-color: var(--papel); transform: scale(1); } }
+.flow3-run { position: absolute; top: 0; left: 0; width: 16px; height: 16px; margin-left: -1px; border-radius: 50%; background: var(--sinal); box-shadow: 0 0 0 6px rgba(168, 102, 255, 0.22); opacity: 0; }
+.flow3.in .flow3-run { animation: flow3-run 7.5s cubic-bezier(.6,0,.3,1) infinite; }
+@keyframes flow3-run {
+  0% { left: 0; opacity: 0; } 4% { left: 0; opacity: 1; } 16% { left: 0; }
+  24%, 36% { left: var(--step); }
+  44%, 56% { left: calc(var(--step) * 2); }
+  64%, 76% { left: calc(var(--step) * 3); }
+  84%, 95% { left: calc(var(--step) * 4); opacity: 1; }
+  100% { left: calc(var(--step) * 4); opacity: 0; }
+}
+.flow3 .flow2-step { opacity: 0; transform: translateY(10px); transition: opacity .5s, transform .5s; }
+.flow3.in .flow2-step { opacity: 1; transform: none; }
+.flow3.in .flow2-step strong { animation: flow3-title 7.5s infinite; animation-delay: calc(var(--i) * 1.5s); }
+@keyframes flow3-title { 0%, 3% { color: inherit; } 6%, 16% { color: #C49BFF; } 20%, 100% { color: inherit; } }
+@media (max-width: 960px) {
+  .flow3 { grid-template-columns: 1fr; gap: 16px; padding: 0 0 0 30px; }
+  .flow3-track { top: 0; bottom: 0; left: 0; right: auto; width: 16px; height: auto; }
+  .flow3-line { top: 7px; left: 7px; width: 2px; height: calc(100% - 14px); transform: scaleY(0); transform-origin: top; }
+  .flow3.in .flow3-line { transform: scaleY(1); }
+  .flow3-node, .flow3-run { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow3 *, .flow3.in * { animation: none !important; transition: none !important; }
+  .flow3-line { transform: none; }
+  .flow3 .flow2-step { opacity: 1; transform: none; }
+}
+
+/* fundo vivo do topo */
+.hero-wrap { position: relative; overflow: hidden; padding-bottom: 36px; }
+.hero-wrap .hero2 { position: relative; z-index: 1; }
+.hero-trace { position: absolute; inset: 0; pointer-events: none; }
+.hero-trace svg { width: 100%; height: 100%; display: block; }
+.ht-grid { color: #D9D2C3; animation: ht-grid 18s linear infinite; }
+@keyframes ht-grid { to { transform: translateX(28px); } }
+.ht-line { fill: none; stroke: var(--mare); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: .55; animation: ht-draw 2.4s .3s ease forwards; }
+@keyframes ht-draw { to { stroke-dashoffset: 0; } }
+.ht-node { fill: var(--papel); stroke: var(--mare); stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center; animation: ht-node .5s ease forwards; }
+@keyframes ht-node { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+.ht-run { fill: var(--sinal); }
+.ht-chip { position: absolute; font: 500 12px var(--f-mono); letter-spacing: .04em; color: var(--tinta); background: var(--papel); border: 1px solid var(--line); padding: 6px 10px; border-radius: 99px; white-space: nowrap; animation: bm-float 6s ease-in-out infinite; }
+.ht-chip::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--sinal); margin-right: 7px; vertical-align: 1px; }
+.ht-chip.k1 { right: 6%; bottom: 3%; }
+.ht-chip.k1::before { background: var(--mare); }
+.ht-chip.k2 { left: 51%; top: 8%; animation-delay: -3s; }
+@media (max-width: 960px) { .ht-chip { display: none; } .ht-line { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) {
+  .ht-grid, .ht-chip { animation: none; }
+  .ht-line { animation: none; stroke-dashoffset: 0; }
+  .ht-node { animation: none; opacity: 1; }
+  .ht-run { display: none; }
+}
+
+/* app no celular */
+.app-sec { display: grid; grid-template-columns: 1.1fr .9fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+.app-copy h2 { font: 700 clamp(28px, 4vw, 42px)/1.08 var(--f-display); letter-spacing: -.03em; margin-bottom: 12px; }
+.app-list { list-style: none; padding: 0; margin: 18px 0 22px; display: flex; flex-direction: column; gap: 12px; }
+.app-list li { display: flex; gap: 10px; align-items: flex-start; }
+.app-list svg { color: var(--sinal-texto); margin-top: 3px; flex-shrink: 0; }
+.phone { justify-self: center; width: min(300px, 80vw); aspect-ratio: 9 / 18.5; background: var(--tinta); border-radius: 42px; padding: 12px; box-shadow: 0 30px 60px -30px rgba(20, 32, 28, .45); }
+.phone-screen { height: 100%; border-radius: 32px; background: var(--mare); padding: 46px 12px 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; position: relative; }
+.phone-time { color: var(--papel); font: 300 54px var(--f-display); text-align: center; letter-spacing: -.02em; margin-bottom: 10px; }
+.phone-note { display: flex; gap: 10px; align-items: flex-start; background: var(--papel); border-radius: 16px; padding: 10px 12px; font-size: 12.5px; opacity: 0; transform: translateY(-14px) scale(.96); }
+.phone-note b { display: block; font-size: 12.5px; }
+.phone-note small { color: var(--grafite); }
+.pn-ico { width: 26px; height: 26px; border-radius: 7px; background: var(--tinta) url("/icon-192.png") center / cover; flex-shrink: 0; }
+.phone-note.n1 { animation: phone-note 9s 0.5s infinite; }
+.phone-note.n2 { animation: phone-note 9s 2s infinite; }
+.phone-note.n3 { animation: phone-note 9s 3.5s infinite; }
+@keyframes phone-note { 0% { opacity: 0; transform: translateY(-14px) scale(.96); } 6%, 80% { opacity: 1; transform: none; } 90%, 100% { opacity: 0; transform: none; } }
+.device-ok { display: flex; gap: 8px; align-items: center; color: var(--ok); font-weight: 600; }
+.device-steps { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.device-steps li { display: flex; gap: 8px; align-items: center; }
+.device-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.side-install { margin: 0 8px 12px; display: flex; align-items: center; gap: 8px; width: calc(100% - 16px); background: transparent; border: 1px solid #2C3B35; color: var(--papel); border-radius: 10px; padding: 9px 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.side-install:hover { border-color: var(--sinal); }
+@media (max-width: 960px) { .app-sec { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .phone-note { animation: none !important; opacity: 1; transform: none; } }

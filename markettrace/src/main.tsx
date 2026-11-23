@@ -5,6 +5,9 @@ import App from "./App";
 import { AuthProvider } from "./lib/auth";
 import { ToastProvider } from "./components/ui";
 import "./styles.css";
+import { registerSW } from "./lib/pwa";
+
+registerSW();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
