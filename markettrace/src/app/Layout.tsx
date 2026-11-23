@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3, Building2, Calculator, CalendarDays, Headphones, KanbanSquare, LayoutGrid, Lightbulb, LogOut,
-  Menu, Palette, Plug, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
+  Menu, Palette, Plug, Sparkles, Radar, Send, Settings, ShieldCheck, Store, Users, Wallet,
 } from "lucide-react";
 import { EmptyState, Loading, Logo, Notice } from "../components/ui";
 import { useAuth } from "../lib/auth";
@@ -128,6 +128,7 @@ const NAV = [
     { to: "/app/canais-de-venda", label: "Canais de venda", icon: Store },
   ] },
   { label: "Inteligência", items: [
+    { to: "/app/ia", label: "Super IA", icon: Sparkles },
     { to: "/app/estudio", label: "Estúdio criativo", icon: Lightbulb },
     { to: "/app/pesquisa", label: "Pesquisa de mercado", icon: Radar },
   ] },
