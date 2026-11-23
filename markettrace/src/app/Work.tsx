@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Crud, type FieldDef } from "../components/Crud";
 import { Badge, EmptyState, HBars, PageHeader, Panel, Stat, Tabs } from "../components/ui";
 import { useAuth } from "../lib/auth";
@@ -21,6 +22,7 @@ function useMonth() {
 
 /* ======================= EMPRESAS ======================= */
 export function Companies() {
+  const [params] = useSearchParams();
   const auth = useAuth();
   const fields: FieldDef[] = [
     { key: "nome", label: "Nome da empresa", required: true, list: true },
@@ -34,7 +36,7 @@ export function Companies() {
     <>
       <PageHeader kicker="Conta" title="Empresas" text="Cada empresa tem seus próprios dados: campanhas, agenda, orçamento, concorrentes. Para agências, cadastre uma por cliente." />
       <Crud
-        table="companies" scope="account" fields={fields} order={["nome"]} newLabel="Nova empresa" defaults={{ ativa: true }} noCreate={!auth.canCreateCompany}
+        table="companies" scope="account" fields={fields} order={["nome"]} newLabel="Nova empresa" defaults={{ ativa: true }} noCreate={!auth.canCreateCompany} openNew={params.get("nova") === "1"}
         empty={{ title: "Nenhuma empresa cadastrada", text: "Cadastre a sua empresa ou a de um cliente para começar." }}
         onRows={() => { void auth.reload(); }}
         rowActions={(r) => r.id === auth.company?.id
